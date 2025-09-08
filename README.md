@@ -1,3 +1,17 @@
+---
+license: mit
+language:
+- en
+- ko
+tags:
+- python
+- cli
+- markdown
+- llm
+- developer-tools
+- code-analysis
+- open-core
+---
 # Dir2md
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
