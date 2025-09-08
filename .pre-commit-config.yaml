@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: dir2md-dry-run
+        name: dir2md (dry-run)
+        entry: bash -lc 'dir2md . --preset iceberg --emit-manifest --stats --dry-run >/dev/null || true'
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]

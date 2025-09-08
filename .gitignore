@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+.venv/
+venv/
+.idea/
+.vscode/
+.ipynb_checkpoints/
+.dist/
+.build/
+.coverage
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Output files - exclude test outputs but keep documentation
+*.manifest.json
+*_blueprint.md
+*_summary.md
+*_output.md
+test_output.md
+example_*.md
+pro_*.md
+raw_*.md
+secure_*.md
+masking.py
+
+# Keep important documentation
+!README.md
+!FEATURES.md  
+!CURRENT_FEATURES.md
+!CONTRIBUTING.md
+!CHANGELOG.md
+
+# Virtual environment (large, not needed)
+venv_clean/
+
+# Additional ignores
+.dir2md_cache/
+tmp/
+temp/
+
+# Personal files to ignore
+ENGLISH_CONVERSION_COMPLETE.md
+USAGE_EXAMPLES.md
