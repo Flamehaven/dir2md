@@ -151,7 +151,7 @@ python -m src.dir2md.cli . --dry-run  # Test CLI
 
 - 🐛 **Bug reports**: [GitHub Issues](https://github.com/your-org/dir2md/issues)
 - 💡 **Feature requests**: [GitHub Discussions](https://github.com/your-org/dir2md/discussions)
-- 📧 **Security issues**: security@dir2md.com
+- 📧 **Security issues**: info@flamehaven.space
 
 ## 📄 License
 
