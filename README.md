@@ -40,6 +40,16 @@ Dir2md analyzes directory structures and generates comprehensive markdown docume
 
 ## 🚀 Quick Start
 
+### 🌐 Try It Online
+
+**[📂 Try dir2md Demo on Hugging Face Spaces](https://huggingface.co/spaces/Flamehaven/dir2md-demo)**
+
+Experience dir2md instantly in your browser:
+- Convert any GitHub repository to markdown
+- See real-time directory structure analysis
+- Download generated markdown blueprints
+- No installation required!
+
 ### Installation
 
 ```bash
