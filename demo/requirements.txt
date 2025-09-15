@@ -1,0 +1,3 @@
+gradio
+pathspec>=0.12.0
+GitPython
