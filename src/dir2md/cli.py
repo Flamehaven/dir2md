@@ -102,7 +102,10 @@ def main(argv: list[str] | None = None) -> int:
             z.write(output)
             if cfg.emit_manifest and output.with_suffix('.manifest.json').exists():
                 z.write(output.with_suffix('.manifest.json'))
-    print(f"[dir2md] Wrote: {output}")
+    try:
+        print(f"[dir2md] Wrote: {output}")
+    except UnicodeEncodeError:
+        print(f"[dir2md] Wrote: (File path contains unprintable characters, but the file was likely created successfully)")
     return 0
 
 if __name__ == "__main__":

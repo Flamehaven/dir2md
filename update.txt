@@ -1,0 +1,30 @@
+Gaps / polish opportunities (high impact → low)
+
+Ship to PyPI + console script
+README says “Coming soon: pip install dir2md”. Cut 0.1.0, add an entry point ([project.scripts] dir2md = dir2md.cli:main) so users don’t need python -m …. 
+GitHub
+
+Release artifacts
+Publish a v0.1.0 GitHub Release; attach a tiny sample blueprint and the JSON manifest to show the output shape.
+
+Usage table & examples
+A mini matrix (“goal → command”) helps newcomers: LLM context (6k tokens) → --preset iceberg --budget-tokens 6000; strict reproducibility → --emit-manifest --no-timestamp; security-aware overview → --masking basic. (All flags already documented.) 
+GitHub
+
+Security doc
+List the exact basic masking patterns (e.g., AWS key regex…), plus a red-box note: “masking is best-effort—review before sharing.” (Pro advertises “9+ patterns”: give two examples, keep details gated.) 
+GitHub
+
+CI quickstart
+Add a 15-line GitHub Actions workflow (lint, tests, build, publish on tag). See sample below.
+
+Compare presets
+One line each: raw (full content), iceberg (balanced sampling), pro (aggressive optimization). Add a 3-file toy repo output side-by-side. 
+GitHub
+
+Windows note
+Since many users are on Windows, add a note about path/glob quoting in PowerShell.
+
+Badges
+PyPI version, wheels, license (already shown), Python 3.9+. 
+GitHub
