@@ -18,13 +18,13 @@ def to_markdown(cfg: 'Config', tree_lines: list[str], file_blocks: list[tuple[Pa
     parts.append(f"- Estimated tokens (prompt): `{stats.est_tokens_prompt}`  ")
     parts.append("")
     parts.append("## Directory Tree\n")
-    parts.append("```\n" + "\n".join(tree_lines) + "\n````\n\n")
+    parts.append("```\n" + "\n".join(tree_lines) + "\n```\n\n")
     if cfg.llm_mode != "off" and file_blocks:
         parts.append("## File Contents\n")
         for path, lang, text in file_blocks:
             rel = path.relative_to(cfg.root)
             parts.append(f"### File: `{rel}`\n")
-            parts.append(f"```{lang}\n{text}\n\n````\n")
+            parts.append(f"```{lang}\n{text}\n```\n\n")
     if cfg.add_stats:
         parts.append("## Summary\n")
         parts.append("| metric | value |\n|---|---:|")
