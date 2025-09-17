@@ -27,7 +27,6 @@ example_*.md
 pro_*.md
 raw_*.md
 secure_*.md
-masking.py
 
 # Keep important documentation
 !README.md
