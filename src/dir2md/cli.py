@@ -1,8 +1,28 @@
 from __future__ import annotations
-import argparse, zipfile, hashlib
+import argparse, zipfile, hashlib, os
 from pathlib import Path
 from .core import Config, generate_markdown_report
 from . import __version__
+
+# Load .env file if it exists (for Pro license and configuration)
+def load_env_file():
+    # Try current directory first, then parent directories
+    current = Path.cwd()
+    for parent in [current] + list(current.parents):
+        env_file = parent / '.env'
+        if env_file.exists():
+            try:
+                for line in env_file.read_text(encoding='utf-8').splitlines():
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        key, value = line.split('=', 1)
+                        os.environ[key.strip()] = value.strip()
+                break  # Stop after first .env file found
+            except Exception:
+                pass  # Silently ignore .env file errors
+
+# Load environment configuration on import
+load_env_file()
 
 DEFAULT_EXCLUDES = [
     ".git", "__pycache__", "node_modules", ".venv",

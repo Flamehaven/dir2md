@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .env
+.env.*
+!.env.example
 .venv/
 venv/
 .idea/
@@ -12,6 +14,13 @@ venv/
 .build/
 .coverage
 .pytest_cache/
+
+# License and API Keys (Security)
+license.key
+*.license
+api_keys.txt
+secrets.txt
+config.local.*
 
 # OS
 .DS_Store
