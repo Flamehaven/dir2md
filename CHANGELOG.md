@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.2] - 2025-09-17
 
 ### Fixed
+- **Masking Mode Selection Logic**
+  - Fixed issue where Pro license users received advanced masking patterns even when using `mode="basic"`
+  - Updated `get_active_masking_rules()` to respect both mode parameter and license availability
+  - Now `mode="basic"` consistently uses only basic patterns regardless of license tier
+  - Ensures users can choose their preferred masking level independent of license capabilities
 - **Enhanced Private Key Security**
   - Upgraded `PRIVATE_KEY` regex to mask entire PEM blocks instead of just headers
   - Added `re.DOTALL` flag support for complete multiline private key content masking
