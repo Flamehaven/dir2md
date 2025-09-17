@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
 import json
+import fnmatch
 
 from .gitignore import build_gitignore_matcher
 from .markdown import to_markdown
@@ -89,14 +90,24 @@ def generate_markdown_report(cfg: Config) -> str:
     def is_ignored(p: Path) -> bool:
         if gitignore and gitignore(str(p.relative_to(root) if p != root else "")):
             return True
+        rel_path = str(p.relative_to(root)).replace('\\', '/')  # Normalize to forward slashes
         for pat in cfg.exclude_globs:
-            if p.match(pat) or any(part == pat for part in p.parts):
+            # Check against relative path for proper wildcard matching
+            if fnmatch.fnmatch(rel_path, pat) or fnmatch.fnmatch(p.name, pat):
+                return True
+            # Keep original directory-name matching for compatibility
+            if any(part == pat for part in p.parts):
                 return True
         return False
 
     def is_omitted(p: Path) -> bool:
+        rel_path = str(p.relative_to(root)).replace('\\', '/')  # Normalize to forward slashes
         for pat in cfg.omit_globs:
-            if p.match(pat) or any(part == pat for part in p.parts):
+            # Check against relative path for proper wildcard matching
+            if fnmatch.fnmatch(rel_path, pat) or fnmatch.fnmatch(p.name, pat):
+                return True
+            # Keep original directory-name matching for compatibility
+            if any(part == pat for part in p.parts):
                 return True
         return False
 
@@ -104,8 +115,13 @@ def generate_markdown_report(cfg: Config) -> str:
         """Check if file matches include patterns (if any are specified)"""
         if not cfg.include_globs:  # No include patterns = include all
             return True
+        rel_path = str(p.relative_to(root)).replace('\\', '/')  # Normalize to forward slashes
         for pat in cfg.include_globs:
-            if p.match(pat) or any(part == pat for part in p.parts):
+            # Check against relative path for proper wildcard matching
+            if fnmatch.fnmatch(rel_path, pat) or fnmatch.fnmatch(p.name, pat):
+                return True
+            # Keep original directory-name matching for compatibility
+            if any(part == pat for part in p.parts):
                 return True
         return False
 
