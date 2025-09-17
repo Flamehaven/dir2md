@@ -22,13 +22,14 @@ ADVANCED_MASKING_RULES = {
 MASK_REPLACEMENT = "[*** MASKED_SECRET ***]"
 PRO_MASK_REPLACEMENT = "[*** MASKED_SECRET_PRO ***]"
 
-def get_active_masking_rules():
-    """Get masking rules based on license level"""
+def get_active_masking_rules(mode: str = "basic"):
+    """Get masking rules based on mode and license level"""
     rules = BASIC_MASKING_RULES.copy()
-    
-    if license_manager.check_feature('advanced_masking'):
+
+    # Only add advanced rules if both mode and license allow it
+    if mode == "advanced" and license_manager.check_feature('advanced_masking'):
         rules.update(ADVANCED_MASKING_RULES)
-    
+
     return rules
 
 # Global flag to show message only once per session
@@ -41,7 +42,7 @@ def apply_masking(text: str, mode: str = "basic") -> str:
     if mode == "off":
         return text
     
-    rules = get_active_masking_rules()
+    rules = get_active_masking_rules(mode)
     
     # Show upgrade message only once if trying to use advanced features without license
     if mode == "advanced" and not license_manager.check_feature('advanced_masking') and not _upgrade_message_shown:

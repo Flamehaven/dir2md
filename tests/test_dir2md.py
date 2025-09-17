@@ -122,3 +122,38 @@ UmV1F2Cu5CX2jUcZdVRrVNjm/4Sk8DohVhQj4JY=
     assert secret_content in md_unmasked
     assert private_key_content in md_unmasked
     assert "[*** MASKED_SECRET ***]" not in md_unmasked
+
+
+def test_masking_pro_license_mode_respect(tmp_path: Path, monkeypatch):
+    """Test that masking respects basic vs advanced mode even with Pro license"""
+    from dir2md.masking import apply_masking
+
+    # Mock Pro license to be available
+    def mock_check_feature(feature_name):
+        return feature_name == 'advanced_masking'
+
+    monkeypatch.setattr('dir2md.masking.license_manager.check_feature', mock_check_feature)
+
+    # Test content with both basic and advanced patterns
+    github_token = "ghp_1234567890abcdefghijklmnopqrstuvwxyz123"  # Advanced pattern
+    aws_key = "AKIAIOSFODNN7EXAMPLE"  # Basic pattern
+    test_content = f"GitHub token: {github_token}\nAWS key: {aws_key}"
+
+    # Test basic mode - should only mask basic patterns even with Pro license
+    basic_masked = apply_masking(test_content, mode="basic")
+    assert aws_key not in basic_masked  # AWS key should be masked (basic pattern)
+    assert github_token in basic_masked  # GitHub token should NOT be masked in basic mode
+    assert "[*** MASKED_SECRET ***]" in basic_masked
+
+    # Test advanced mode - should mask both basic and advanced patterns
+    advanced_masked = apply_masking(test_content, mode="advanced")
+    assert aws_key not in advanced_masked  # AWS key should be masked
+    assert github_token not in advanced_masked  # GitHub token should be masked in advanced mode
+    assert "[*** MASKED_SECRET ***]" in advanced_masked
+    assert "[*** MASKED_SECRET_PRO ***]" in advanced_masked
+
+    # Test off mode - should mask nothing
+    off_masked = apply_masking(test_content, mode="off")
+    assert aws_key in off_masked
+    assert github_token in off_masked
+    assert "[*** MASKED_SECRET ***]" not in off_masked
