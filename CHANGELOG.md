@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.2] - 2025-09-17
 
 ### Fixed
+- **CLI Option Functionality**
+  - Fixed `--include-glob` having no effect during report generation
+  - Fixed `--follow-symlinks` flag being ignored in directory walker
+  - Added proper file filtering based on include patterns while preserving directory tree structure
+  - Enhanced symlink detection to respect follow_symlinks setting for both directories and files
 - **Masking Mode Selection Logic**
   - Fixed issue where Pro license users received advanced masking patterns even when using `mode="basic"`
   - Updated `get_active_masking_rules()` to respect both mode parameter and license availability
