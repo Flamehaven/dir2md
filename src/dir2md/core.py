@@ -151,9 +151,14 @@ def generate_markdown_report(cfg: Config) -> str:
         if f.is_symlink() and not cfg.follow_symlinks:
             continue
         try:
-            raw = f.read_bytes()
+            raw_full = f.read_bytes()
         except Exception:
             continue
+        # Preserve full file hash before truncation
+        full_file_hash = sha256_bytes(raw_full)
+
+        # Apply max_bytes truncation for processing
+        raw = raw_full
         if cfg.max_bytes and len(raw) > cfg.max_bytes:
             raw = raw[: cfg.max_bytes]
         text = raw.decode("utf-8", errors="replace")
@@ -166,7 +171,7 @@ def generate_markdown_report(cfg: Config) -> str:
         sim_seen.append(sh)
         candidates.append({
             "path": f,
-            "sha256": sha256_bytes(raw),
+            "sha256": full_file_hash,
             "summary": summarize(f, text, max_lines=40),
             "text": text,
             "simhash": sh,
