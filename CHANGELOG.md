@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Restored missing `src/dir2md/masking.py` file that was excluded by `.gitignore`
   - Resolved critical ImportError preventing core masking functionality from working
   - Removed `masking.py` entry from `.gitignore` to allow proper git tracking
+- **Incomplete Private Key Masking**
+  - Enhanced `PRIVATE_KEY` regex to match entire PEM blocks instead of just headers
+  - Added `re.DOTALL` flag support for multiline private key content masking
+  - Now completely masks private key body and footer, preventing sensitive data leakage
+  - Supports all PEM formats: `PRIVATE KEY`, `RSA PRIVATE KEY`, `EC PRIVATE KEY`
 - **Critical Import Issue** in masking module accessibility
   - Fixed `ImportError` when importing `apply_masking` from package root level
   - Added missing exports in `__init__.py` for core functions (`apply_masking`, `Config`, `generate_markdown_report`)
