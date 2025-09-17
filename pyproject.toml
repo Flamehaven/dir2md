@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dir2md"
-version = "0.0.1"
+version = "1.0.1"
 description = "Generate a Markdown blueprint: directory tree + optional file contents (token-optimized, ICEBERG preset)"
 readme = "README.md"
 authors = [{name = "Flamehaven", email = "info@flamehaven.space"}]
