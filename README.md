@@ -33,7 +33,7 @@ Dir2md analyzes directory structures and generates comprehensive markdown docume
 
 - **🎯 Smart Content Sampling**: Head/tail sampling with configurable token budgets
 - **🔄 Duplicate Detection**: SimHash-based deduplication to reduce noise
-- **🛡️ Security First**: Built-in secret masking (basic OSS, advanced Pro)
+- **🛡️ Security First**: Enhanced secret masking - complete PEM blocks, AWS keys, tokens (OSS), advanced patterns (Pro)
 - **📊 Multiple Output Modes**: Reference, summary, or full inline content
 - **🔧 Highly Configurable**: Extensive filtering and customization options
 - **⚡ Developer Friendly**: Raw mode default for complete code visibility
@@ -68,7 +68,7 @@ pip install dir2md
 # Generate project blueprint (developer-friendly raw mode)
 dir2md .
 
-# With basic security masking
+# With enhanced security masking (private keys, AWS keys, tokens)
 dir2md . --masking basic
 
 # Generate with manifest for CI/CD
@@ -116,7 +116,10 @@ dir2md . --budget-tokens 4000 --preset iceberg
 - Complete directory analysis
 - Token optimization and sampling
 - SimHash deduplication
-- Basic security masking (3 patterns)
+- Enhanced security masking (3 comprehensive patterns)
+  - AWS Access Keys (`AKIA*`)
+  - Bearer Tokens (`Bearer *`)
+  - Complete Private Key PEM blocks
 - All output modes and presets
 - Deterministic builds
 

@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-09-17
+
+### Fixed
+- **Enhanced Private Key Security**
+  - Upgraded `PRIVATE_KEY` regex to mask entire PEM blocks instead of just headers
+  - Added `re.DOTALL` flag support for complete multiline private key content masking
+  - Now fully masks private key body and footer, eliminating sensitive data leakage
+  - Supports all PEM formats: `PRIVATE KEY`, `RSA PRIVATE KEY`, `EC PRIVATE KEY`
+
+### Testing
+- Enhanced `test_masking` with comprehensive private key validation
+- Verifies complete masking of header, body, and footer content
+- Tests multiple private key formats for thorough security coverage
+- All 4 test suites continue to pass with enhanced security
+
 ## [1.0.1] - 2025-09-17
 
 ### Fixed
