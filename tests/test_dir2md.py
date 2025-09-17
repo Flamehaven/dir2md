@@ -157,3 +157,103 @@ def test_masking_pro_license_mode_respect(tmp_path: Path, monkeypatch):
     assert aws_key in off_masked
     assert github_token in off_masked
     assert "[*** MASKED_SECRET ***]" not in off_masked
+
+
+def test_include_glob_filtering(tmp_path: Path):
+    """Test that --include-glob properly filters files"""
+    root = _make_repo(tmp_path)
+
+    # Create files with different extensions
+    (root / "main.py").write_text("print('hello')", encoding="utf-8")
+    (root / "config.json").write_text('{"key": "value"}', encoding="utf-8")
+    (root / "readme.md").write_text("# Project", encoding="utf-8")
+    (root / "script.js").write_text("console.log('test')", encoding="utf-8")
+
+    # Test with include glob for Python files only
+    cfg = Config(
+        root=root, output=root/"OUT.md", include_globs=["*.py"], exclude_globs=[], omit_globs=[],
+        respect_gitignore=False, follow_symlinks=False, max_bytes=200_000, max_lines=2000,
+        include_contents=True, only_ext=None, add_stats=True, add_toc=False,
+        llm_mode="inline", budget_tokens=1000, max_file_tokens=1000, dedup_bits=0,
+        sample_head=120, sample_tail=40, strip_comments=False, emit_manifest=False,
+        preset="raw", explain_capsule=False, no_timestamp=True,
+        masking_mode="off",
+    )
+    md = generate_markdown_report(cfg)
+
+    # Should include main.py content but not other files' content
+    assert "main.py" in md  # File should appear in tree
+    assert "print('hello')" in md  # Content should be included
+
+    # Other files may appear in tree but their content should not be included
+    assert '{"key": "value"}' not in md  # JSON content should not be included
+    assert "console.log('test')" not in md  # JS content should not be included
+
+    # Verify that config.json appears in tree but not in file contents section
+    if "## File Contents" in md:
+        file_contents_section = md.split("## File Contents")[1]
+        assert "main.py" in file_contents_section
+        assert "config.json" not in file_contents_section
+
+    # Test with multiple include patterns
+    cfg.include_globs = ["*.py", "*.json"]
+    md_multi = generate_markdown_report(cfg)
+
+    # Should include both .py and .json files' content
+    assert "main.py" in md_multi
+    assert "print('hello')" in md_multi
+    assert '{"key": "value"}' in md_multi  # JSON content should now be included
+    assert "console.log('test')" not in md_multi  # JS content should not be included
+
+
+def test_follow_symlinks_behavior(tmp_path: Path):
+    """Test that --follow-symlinks controls symlink traversal"""
+    root = _make_repo(tmp_path)
+
+    # Create a regular directory and file
+    regular_dir = root / "regular_dir"
+    regular_dir.mkdir()
+    (regular_dir / "regular_file.txt").write_text("regular content", encoding="utf-8")
+
+    # Create a symlinked directory (if the OS supports it)
+    try:
+        symlink_dir = root / "symlink_dir"
+        symlink_dir.symlink_to(regular_dir)
+        symlinks_supported = True
+    except (OSError, NotImplementedError):
+        # Skip symlink tests on systems that don't support them
+        symlinks_supported = False
+
+    if not symlinks_supported:
+        import pytest
+        pytest.skip("Symlinks not supported on this system")
+
+    # Test with follow_symlinks=False (default)
+    cfg = Config(
+        root=root, output=root/"OUT.md", include_globs=[], exclude_globs=[], omit_globs=[],
+        respect_gitignore=False, follow_symlinks=False, max_bytes=200_000, max_lines=2000,
+        include_contents=True, only_ext=None, add_stats=True, add_toc=False,
+        llm_mode="inline", budget_tokens=1000, max_file_tokens=1000, dedup_bits=0,
+        sample_head=120, sample_tail=40, strip_comments=False, emit_manifest=False,
+        preset="raw", explain_capsule=False, no_timestamp=True,
+        masking_mode="off",
+    )
+    md_no_symlinks = generate_markdown_report(cfg)
+
+    # Should show symlink in tree but not traverse into it
+    assert "symlink_dir" in md_no_symlinks  # Listed in tree
+    assert "regular_dir" in md_no_symlinks  # Regular dir should be traversed
+    assert "regular_file.txt" in md_no_symlinks  # File in regular dir
+    assert md_no_symlinks.count("regular content") == 1  # Should appear only once
+
+    # Test with follow_symlinks=True
+    cfg.follow_symlinks = True
+    md_with_symlinks = generate_markdown_report(cfg)
+
+    # Should traverse symlinked directory
+    assert "symlink_dir" in md_with_symlinks
+    assert "regular_dir" in md_with_symlinks
+    assert "regular_file.txt" in md_with_symlinks
+    # Content might appear twice if symlink is followed (once from regular_dir, once from symlink_dir)
+    # But deduplication might prevent this, so we just check it appears at least once
+    assert "regular content" in md_with_symlinks

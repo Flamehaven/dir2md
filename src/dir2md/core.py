@@ -100,6 +100,15 @@ def generate_markdown_report(cfg: Config) -> str:
                 return True
         return False
 
+    def is_included(p: Path) -> bool:
+        """Check if file matches include patterns (if any are specified)"""
+        if not cfg.include_globs:  # No include patterns = include all
+            return True
+        for pat in cfg.include_globs:
+            if p.match(pat) or any(part == pat for part in p.parts):
+                return True
+        return False
+
     # Tree & file collection
     tree_lines: list[str] = [str(root)]
     files: list[Path] = []
@@ -118,8 +127,12 @@ def generate_markdown_report(cfg: Config) -> str:
             joint = "└── " if last else "├── "
             tree_lines.append(f"{prefix}{joint}{child.name}")
             if child.is_dir():
+                # Check if it's a symlink and respect follow_symlinks setting
+                if child.is_symlink() and not cfg.follow_symlinks:
+                    continue  # Skip symlinked directories when follow_symlinks=False
                 walk(child, prefix + ("    " if last else "│   "))
             else:
+                # For files, add to list (but check symlinks during processing)
                 files.append(child)
 
     walk(root)
@@ -131,6 +144,11 @@ def generate_markdown_report(cfg: Config) -> str:
         if cfg.only_ext and f.suffix.lstrip(".").lower() not in cfg.only_ext:
             continue
         if is_omitted(f):
+            continue
+        if not is_included(f):
+            continue
+        # Skip symlinked files when follow_symlinks=False
+        if f.is_symlink() and not cfg.follow_symlinks:
             continue
         try:
             raw = f.read_bytes()
