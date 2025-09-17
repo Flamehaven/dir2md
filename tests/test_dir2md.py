@@ -88,6 +88,13 @@ def test_masking(tmp_path: Path):
     secret_content = "My AWS key is AKIAIOSFODNN7EXAMPLE"
     (root / ".env").write_text(secret_content, encoding="utf-8")
 
+    # Add a file with a private key
+    private_key_content = """-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7VJTUt9Us8cKB
+UmV1F2Cu5CX2jUcZdVRrVNjm/4Sk8DohVhQj4JY=
+-----END PRIVATE KEY-----"""
+    (root / "private_key.pem").write_text(private_key_content, encoding="utf-8")
+
     cfg = Config(
         root=root, output=root/"OUT.md", include_globs=[], exclude_globs=[], omit_globs=[],
         respect_gitignore=False, follow_symlinks=False, max_bytes=200_000, max_lines=2000,
@@ -99,11 +106,19 @@ def test_masking(tmp_path: Path):
     )
     md = generate_markdown_report(cfg)
 
+    # Check AWS key masking
     assert secret_content not in md
     assert "[*** MASKED_SECRET ***]" in md
+
+    # Check private key masking - entire block should be masked
+    assert private_key_content not in md
+    assert "-----BEGIN PRIVATE KEY-----" not in md
+    assert "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7VJTUt9Us8cKB" not in md
+    assert "-----END PRIVATE KEY-----" not in md
 
     # Test with masking off
     cfg.masking_mode = "off"
     md_unmasked = generate_markdown_report(cfg)
     assert secret_content in md_unmasked
+    assert private_key_content in md_unmasked
     assert "[*** MASKED_SECRET ***]" not in md_unmasked

@@ -5,7 +5,7 @@ from .license import license_manager
 BASIC_MASKING_RULES = {
     "AWS_ACCESS_KEY_ID": r"AKIA[0-9A-Z]{16}",
     "BEARER_TOKEN": r"[Bb]earer\s+[A-Za-z0-9\-\._~\+\/]+=*",
-    "PRIVATE_KEY": r"-----BEGIN ((EC|RSA|OPENSSH) )?PRIVATE KEY-----",
+    "PRIVATE_KEY": r"-----BEGIN ((EC|RSA|OPENSSH) )?PRIVATE KEY-----.*?-----END ((EC|RSA|OPENSSH) )?PRIVATE KEY-----",
 }
 
 # Advanced masking rules (Pro version only)
@@ -51,6 +51,10 @@ def apply_masking(text: str, mode: str = "basic") -> str:
     
     for rule_name, pattern in rules.items():
         replacement = PRO_MASK_REPLACEMENT if rule_name in ADVANCED_MASKING_RULES else MASK_REPLACEMENT
-        text = re.sub(pattern, replacement, text)
+        # Use DOTALL flag for private keys to match across newlines
+        if rule_name == "PRIVATE_KEY":
+            text = re.sub(pattern, replacement, text, flags=re.DOTALL)
+        else:
+            text = re.sub(pattern, replacement, text)
     
     return text
