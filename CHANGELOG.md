@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.1] - 2025-09-17
 
 ### Fixed
+- **Missing masking.py File**
+  - Restored missing `src/dir2md/masking.py` file that was excluded by `.gitignore`
+  - Resolved critical ImportError preventing core masking functionality from working
+  - Removed `masking.py` entry from `.gitignore` to allow proper git tracking
 - **Critical Import Issue** in masking module accessibility
   - Fixed `ImportError` when importing `apply_masking` from package root level
   - Added missing exports in `__init__.py` for core functions (`apply_masking`, `Config`, `generate_markdown_report`)
