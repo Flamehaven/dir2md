@@ -37,6 +37,11 @@ pro_*.md
 raw_*.md
 secure_*.md
 
+# Generated blueprint files
+PROJECT_BLUEPRINT.md
+DIR2MD_BLUEPRINT.md
+*.capsule.zip
+
 # Keep important documentation
 !README.md
 !FEATURES.md  

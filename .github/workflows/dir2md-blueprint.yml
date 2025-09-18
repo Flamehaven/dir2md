@@ -21,17 +21,17 @@ jobs:
       - name: Generate blueprint
         id: gen
         run: |
-          dir2md . --capsule --emit-manifest --stats -o PROJECT_BLUEPRINT.md || true
-          TOKENS=$(jq .stats.est_tokens_prompt PROJECT_BLUEPRINT.manifest.json)
+          dir2md . --capsule --emit-manifest --stats -o DIR2MD_BLUEPRINT.md || true
+          TOKENS=$(jq .stats.est_tokens_prompt DIR2MD_BLUEPRINT.manifest.json 2>/dev/null || echo "0")
           echo "tokens=$TOKENS" >> $GITHUB_OUTPUT
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: dir2md-blueprint
           path: |
-            PROJECT_BLUEPRINT.md
-            PROJECT_BLUEPRINT.manifest.json
-            PROJECT_BLUEPRINT.capsule.zip
+            DIR2MD_BLUEPRINT.md
+            DIR2MD_BLUEPRINT.manifest.json
+            DIR2MD_BLUEPRINT.capsule.zip
       - name: Comment PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
