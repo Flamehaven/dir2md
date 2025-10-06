@@ -70,9 +70,13 @@ def _pattern_allows_root_file(pattern: str) -> bool:
     while normalized.startswith('**/'):
         consumed_recursive = True
         normalized = normalized[3:]
-    if consumed_recursive:
+    if not normalized:
         return False
-    return '/' not in normalized
+    if '/' not in normalized:
+        if consumed_recursive and '*' in normalized:
+            return False
+        return True
+    return False
 
 
 def _expand_glob_patterns(patterns: List[str]) -> list[str]:

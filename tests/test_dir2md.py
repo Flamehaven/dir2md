@@ -380,6 +380,9 @@ def test_nested_glob_patterns(tmp_path: Path):
     include_src = run_config(include=["src/**/*.py"], suffix="include_src")
     assert include_src == {"src/utils/helper.py"}
 
+    include_recursive_root = run_config(include=["**/main.py"], suffix="include_recursive_root")
+    assert include_recursive_root == {"main.py"}
+
     exclude_pyc = run_config(exclude=["**/*.pyc"], suffix="exclude_pyc")
     assert "__pycache__/helper.cpython-39.pyc" not in exclude_pyc
     assert "src/__pycache__/main.cpython-39.pyc" not in exclude_pyc
