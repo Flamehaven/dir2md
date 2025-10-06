@@ -56,6 +56,24 @@ _DEFAULT_ONLY_EXT = {"py","ts","tsx","js","jsx","md","txt","toml","yaml","yml","
 
 _GLOB_SPECIAL_CHARS = set("*?[")
 
+@dataclass(frozen=True)
+class _CompiledGlob:
+    spec: PathSpec
+    allows_root_files: bool
+
+
+def _pattern_allows_root_file(pattern: str) -> bool:
+    normalized = pattern.lstrip('/')
+    if not normalized:
+        return True
+    consumed_recursive = False
+    while normalized.startswith('**/'):
+        consumed_recursive = True
+        normalized = normalized[3:]
+    if consumed_recursive:
+        return False
+    return '/' not in normalized
+
 
 def _expand_glob_patterns(patterns: List[str]) -> list[str]:
     expanded: list[str] = []
@@ -81,11 +99,13 @@ def _expand_glob_patterns(patterns: List[str]) -> list[str]:
     return expanded
 
 
-def _compile_pathspec(patterns: List[str]) -> PathSpec | None:
+def _compile_pathspec(patterns: List[str]) -> _CompiledGlob | None:
     expanded = _expand_glob_patterns(patterns)
     if not expanded:
         return None
-    return PathSpec.from_lines('gitwildmatch', expanded)
+    spec = PathSpec.from_lines('gitwildmatch', expanded)
+    allows_root = any(_pattern_allows_root_file(p) for p in expanded)
+    return _CompiledGlob(spec=spec, allows_root_files=allows_root)
 
 
 def apply_preset(cfg: Config) -> Config:
@@ -126,15 +146,20 @@ def generate_markdown_report(cfg: Config) -> str:
     exclude_spec = _compile_pathspec(cfg.exclude_globs)
     omit_spec = _compile_pathspec(cfg.omit_globs)
 
-    def _spec_matches(spec: PathSpec | None, path: Path) -> bool:
+    def _spec_matches(spec: _CompiledGlob | None, path: Path) -> bool:
         if spec is None:
             return False
-        # Use a clean relative path. pathspec is designed to handle this correctly.
         try:
+            # Normalize to a POSIX-style relative path for pathspec matching.
             relative_path = str(path.relative_to(root)).replace('\\', '/')
-            return spec.match_file(relative_path)
         except ValueError:
             return False
+        matched = spec.spec.match_file(relative_path)
+        if not matched:
+            return False
+        if '/' not in relative_path and not spec.allows_root_files:
+            return False
+        return True
 
     def is_ignored(p: Path) -> bool:
         if gitignore and gitignore(str(p.relative_to(root) if p != root else '')):
