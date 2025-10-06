@@ -38,6 +38,14 @@ Dir2md analyzes directory structures and generates comprehensive markdown docume
 - **🔧 Highly Configurable**: Extensive filtering and customization options
 - **⚡ Developer Friendly**: Raw mode default for complete code visibility
 
+## 🌟 Why Dir2md?
+
+Traditional documentation approaches fall short when working with AI assistants:
+
+- **Too much noise**: Raw `tree` + `cat` includes irrelevant files
+- **Token waste**: Unoptimized content hits LLM context limits  
+- **Security risks**: Accidental exposure of secrets and keys
+
 ## 🚀 Quick Start
 
 ### 🌐 Try It Online
@@ -210,14 +218,6 @@ python -m src.dir2md.cli . --dry-run  # Test CLI
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 Pro features are available under a separate commercial license.
-
-## 🌟 Why Dir2md?
-
-Traditional documentation approaches fall short when working with AI assistants:
-
-- **Too much noise**: Raw `tree` + `cat` includes irrelevant files
-- **Token waste**: Unoptimized content hits LLM context limits  
-- **Security risks**: Accidental exposure of secrets and keys
 - **No structure**: Difficult for AI to understand project layout
 
 Dir2md solves these problems with intelligent analysis, sampling, and optimization specifically designed for the AI era.
