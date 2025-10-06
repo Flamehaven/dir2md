@@ -21,12 +21,12 @@ Dir2md follows an **Open-Core** model - providing essential functionality for fr
 
 ### Core Functionality
 - **📁 Directory Scanning**: Complete file tree analysis with `.gitignore` support
-- **🎯 Smart Filtering**: Include/exclude/omit glob patterns
+- **🎯 Smart Filtering**: Include/exclude/omit glob patterns (gitwildmatch semantics)
 - **📊 Token Optimization**: Head/tail sampling with configurable budgets
 - **🔄 Duplicate Detection**: SimHash-based content deduplication 
 - **📋 Manifest Generation**: JSON metadata with file hashes and statistics
 - **⏰ Deterministic Output**: `--no-timestamp` for reproducible builds
-- **🎨 Multiple Presets**: `iceberg`, `pro`, `raw` (default: `raw` for developers)
+- **🎨 Multiple Presets**: `iceberg`, `pro`, `raw` (default: `raw` for developers; raw disables `--emit-manifest`)
 
 ### Basic Security
 - **🛡️ Essential Masking**: Protection for common secrets

@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dir2md"
-version = "1.0.2"
+version = "1.0.3"
 description = "Generate a Markdown blueprint: directory tree + optional file contents (token-optimized, ICEBERG preset)"
 readme = "README.md"
 authors = [{name = "Flamehaven", email = "info@flamehaven.space"}]
 license = {text = "MIT"}
 requires-python = ">=3.9"
-dependencies = ["pathspec>=0.12.0"]
+dependencies = ["pathspec>=0.12.0", 'tomli>=2.0.0; python_version < "3.11"']
 
 [project.scripts]
 dir2md = "dir2md.cli:main"
@@ -20,3 +20,4 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+

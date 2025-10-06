@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
 import json
-import fnmatch
+
+from pathspec import PathSpec
 
 from .gitignore import build_gitignore_matcher
 from .markdown import to_markdown
@@ -53,6 +54,40 @@ class Config:
 _DEFAULT_ONLY_EXT = {"py","ts","tsx","js","jsx","md","txt","toml","yaml","yml","json", ""}
 
 
+_GLOB_SPECIAL_CHARS = set("*?[")
+
+
+def _expand_glob_patterns(patterns: List[str]) -> list[str]:
+    expanded: list[str] = []
+    seen: set[str] = set()
+    for raw in patterns:
+        if not raw:
+            continue
+        normalized = raw.replace('\\', '/')
+        if not normalized:
+            continue
+        candidates = [normalized]
+        if not any(ch in normalized for ch in _GLOB_SPECIAL_CHARS):
+            base = normalized.rstrip('/') or normalized
+            candidates.extend([
+                f"{base}/**",
+                f"**/{base}",
+                f"**/{base}/**",
+            ])
+        for candidate in candidates:
+            if candidate not in seen:
+                seen.add(candidate)
+                expanded.append(candidate)
+    return expanded
+
+
+def _compile_pathspec(patterns: List[str]) -> PathSpec | None:
+    expanded = _expand_glob_patterns(patterns)
+    if not expanded:
+        return None
+    return PathSpec.from_lines('gitwildmatch', expanded)
+
+
 def apply_preset(cfg: Config) -> Config:
     try:
         total_bytes = sum((f.stat().st_size for f in cfg.root.rglob('*') if f.is_file()))
@@ -87,43 +122,32 @@ def generate_markdown_report(cfg: Config) -> str:
 
     gitignore = build_gitignore_matcher(root) if cfg.respect_gitignore else None
 
+    include_spec = _compile_pathspec(cfg.include_globs)
+    exclude_spec = _compile_pathspec(cfg.exclude_globs)
+    omit_spec = _compile_pathspec(cfg.omit_globs)
+
+    def _spec_matches(spec: PathSpec | None, path: Path) -> bool:
+        if spec is None:
+            return False
+        # Use a clean relative path. pathspec is designed to handle this correctly.
+        try:
+            relative_path = str(path.relative_to(root)).replace('\\', '/')
+            return spec.match_file(relative_path)
+        except ValueError:
+            return False
+
     def is_ignored(p: Path) -> bool:
-        if gitignore and gitignore(str(p.relative_to(root) if p != root else "")):
+        if gitignore and gitignore(str(p.relative_to(root) if p != root else '')):
             return True
-        rel_path = str(p.relative_to(root)).replace('\\', '/')  # Normalize to forward slashes
-        for pat in cfg.exclude_globs:
-            # Check against relative path for proper wildcard matching
-            if fnmatch.fnmatch(rel_path, pat) or fnmatch.fnmatch(p.name, pat):
-                return True
-            # Keep original directory-name matching for compatibility
-            if any(part == pat for part in p.parts):
-                return True
-        return False
+        return _spec_matches(exclude_spec, p)
 
     def is_omitted(p: Path) -> bool:
-        rel_path = str(p.relative_to(root)).replace('\\', '/')  # Normalize to forward slashes
-        for pat in cfg.omit_globs:
-            # Check against relative path for proper wildcard matching
-            if fnmatch.fnmatch(rel_path, pat) or fnmatch.fnmatch(p.name, pat):
-                return True
-            # Keep original directory-name matching for compatibility
-            if any(part == pat for part in p.parts):
-                return True
-        return False
+        return _spec_matches(omit_spec, p)
 
     def is_included(p: Path) -> bool:
-        """Check if file matches include patterns (if any are specified)"""
-        if not cfg.include_globs:  # No include patterns = include all
+        if include_spec is None:
             return True
-        rel_path = str(p.relative_to(root)).replace('\\', '/')  # Normalize to forward slashes
-        for pat in cfg.include_globs:
-            # Check against relative path for proper wildcard matching
-            if fnmatch.fnmatch(rel_path, pat) or fnmatch.fnmatch(p.name, pat):
-                return True
-            # Keep original directory-name matching for compatibility
-            if any(part == pat for part in p.parts):
-                return True
-        return False
+        return _spec_matches(include_spec, p)
 
     # Tree & file collection
     tree_lines: list[str] = [str(root)]

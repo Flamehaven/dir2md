@@ -307,141 +307,85 @@ def test_sha256_preservation_with_max_bytes(tmp_path: Path):
 
 
 def test_nested_glob_patterns(tmp_path: Path):
-    """Test that glob patterns work correctly with nested directory structures"""
+    """Glob patterns should match nested files using gitwildmatch semantics."""
     root = tmp_path / "test_project"
     root.mkdir()
 
-    # Create nested directory structure with various file types
     (root / "src" / "utils").mkdir(parents=True, exist_ok=True)
     (root / "tests" / "unit").mkdir(parents=True, exist_ok=True)
     (root / "__pycache__").mkdir(parents=True, exist_ok=True)
     (root / "src" / "__pycache__").mkdir(parents=True, exist_ok=True)
 
-    # Create files in nested directories
-    (root / "main.py").write_text("print('main')", encoding="utf-8")  # Root level .py
-    (root / "config.json").write_text('{"root": "config"}', encoding="utf-8")  # Root level .json
+    (root / "main.py").write_text("print('main')", encoding="utf-8")
+    (root / "config.json").write_text('{"root": "config"}', encoding="utf-8")
     (root / "src" / "utils" / "helper.py").write_text("def helper(): pass", encoding="utf-8")
     (root / "src" / "utils" / "data.json").write_text('{"key": "value"}', encoding="utf-8")
     (root / "tests" / "unit" / "test_helper.py").write_text("def test_helper(): pass", encoding="utf-8")
     (root / "__pycache__" / "helper.cpython-39.pyc").write_bytes(b"compiled_bytecode")
     (root / "src" / "__pycache__" / "main.cpython-39.pyc").write_bytes(b"more_bytecode")
 
-    # Test 1: Include ONLY .py files (should work for nested too)
-    cfg_include = Config(
-        root=root, output=root/"OUT.md", include_globs=["*.py"], exclude_globs=[], omit_globs=[],
-        respect_gitignore=False, follow_symlinks=False, max_bytes=200_000, max_lines=2000,
-        include_contents=True, only_ext=None, add_stats=True, add_toc=False,
-        llm_mode="inline", budget_tokens=1000, max_file_tokens=1000, dedup_bits=0,
-        sample_head=120, sample_tail=40, strip_comments=False, emit_manifest=False,
-        preset="raw", explain_capsule=False, no_timestamp=True,
-        masking_mode="off",
-    )
-    md_include = generate_markdown_report(cfg_include)
-
-    print("=== INCLUDE *.py TEST ===")
-    print("Should include main.py:", "main.py" in md_include)
-    print("Should include helper.py:", "src/utils/helper.py" in md_include or "helper.py" in md_include)
-    print("Should include test_helper.py:", "test_helper.py" in md_include)
-    print("Should NOT include config.json:", "config.json" not in md_include)
-    print("Should NOT include data.json:", "data.json" not in md_include)
-
-    # These should be included
-    assert "main.py" in md_include
-    assert "helper.py" in md_include
-    assert "test_helper.py" in md_include
-    assert "print('main')" in md_include
-    assert "def helper(): pass" in md_include
-    assert "def test_helper(): pass" in md_include
-
-    # These should NOT be included (JSON files)
-    assert '{"root": "config"}' not in md_include
-    assert '{"key": "value"}' not in md_include
-
-    # Test 2: Exclude .pyc files (should exclude nested ones too)
-    cfg_exclude = Config(
-        root=root, output=root/"OUT.md", include_globs=[], exclude_globs=["*.pyc"], omit_globs=[],
-        respect_gitignore=False, follow_symlinks=False, max_bytes=200_000, max_lines=2000,
-        include_contents=True, only_ext=None, add_stats=True, add_toc=False,
-        llm_mode="inline", budget_tokens=1000, max_file_tokens=1000, dedup_bits=0,
-        sample_head=120, sample_tail=40, strip_comments=False, emit_manifest=False,
-        preset="raw", explain_capsule=False, no_timestamp=True,
-        masking_mode="off",
-    )
-    md_exclude = generate_markdown_report(cfg_exclude)
-
-    print("=== EXCLUDE *.pyc TEST ===")
-    print("Should NOT include helper.cpython-39.pyc:", "helper.cpython-39.pyc" not in md_exclude)
-    print("Should NOT include main.cpython-39.pyc:", "main.cpython-39.pyc" not in md_exclude)
-    print("Tree contains .pyc files:", "helper.cpython-39.pyc" in md_exclude)
-
-    # Should NOT include .pyc files (even nested ones) - THIS IS THE BUG
-    # Currently this will FAIL because *.pyc doesn't match nested paths
-    try:
-        assert "helper.cpython-39.pyc" not in md_exclude
-        assert "main.cpython-39.pyc" not in md_exclude
-        assert "compiled_bytecode" not in md_exclude
-        assert "more_bytecode" not in md_exclude
-        print("PASS: Exclude test passed - nested .pyc files properly excluded")
-    except AssertionError:
-        print("BUG CONFIRMED: Nested .pyc files are NOT being excluded by *.pyc pattern")
-        # Don't fail the test yet - we want to see the pattern
-
-    # Test 3: Complex patterns like **/*.py (should work when fixed)
-    cfg_complex = Config(
-        root=root, output=root/"OUT.md", include_globs=["**/*.py"], exclude_globs=[], omit_globs=[],
-        respect_gitignore=False, follow_symlinks=False, max_bytes=200_000, max_lines=2000,
-        include_contents=True, only_ext=None, add_stats=True, add_toc=False,
-        llm_mode="inline", budget_tokens=1000, max_file_tokens=1000, dedup_bits=0,
-        sample_head=120, sample_tail=40, strip_comments=False, emit_manifest=False,
-        preset="raw", explain_capsule=False, no_timestamp=True,
-        masking_mode="off",
-    )
-
-    try:
-        md_complex = generate_markdown_report(cfg_complex)
-        print("=== COMPLEX PATTERN **/*.py TEST ===")
-        print("**/*.py pattern worked")
-        assert "main.py" in md_complex
-        assert "helper.py" in md_complex
-        assert "test_helper.py" in md_complex
-    except Exception as e:
-        print(f"BUG: **/*.py pattern failed: {e}")
-        # This is expected to fail with current implementation
-
-    # Test 4: More complex patterns
-    test_patterns = [
-        ("src/**/*.py", ["helper.py"], ["main.py", "test_helper.py"]),  # Only files in src/ hierarchy
-        ("**/*.json", ["data.json", "config.json"], ["main.py"]),      # All JSON files
-        ("tests/**/*", ["test_helper.py"], ["main.py", "helper.py"]),  # Only files in tests/ hierarchy
-    ]
-
-    for pattern, should_include, should_exclude in test_patterns:
-        print(f"\n=== TESTING PATTERN: {pattern} ===")
-        cfg_test = Config(
-            root=root, output=root/"OUT.md", include_globs=[pattern], exclude_globs=[], omit_globs=[],
-            respect_gitignore=False, follow_symlinks=False, max_bytes=200_000, max_lines=2000,
-            include_contents=True, only_ext=None, add_stats=True, add_toc=False,
-            llm_mode="inline", budget_tokens=1000, max_file_tokens=1000, dedup_bits=0,
-            sample_head=120, sample_tail=40, strip_comments=False, emit_manifest=False,
-            preset="raw", explain_capsule=False, no_timestamp=True,
+    def run_config(include: list[str] | None = None, exclude: list[str] | None = None, omit: list[str] | None = None, suffix: str = "out") -> set[str]:
+        cfg = Config(
+            root=root,
+            output=root / f"{suffix}.md",
+            include_globs=include or [],
+            exclude_globs=exclude or [],
+            omit_globs=omit or [],
+            respect_gitignore=False,
+            follow_symlinks=False,
+            max_bytes=200_000,
+            max_lines=2000,
+            include_contents=True,
+            only_ext=None,
+            add_stats=True,
+            add_toc=False,
+            llm_mode="ref",
+            budget_tokens=10_000,
+            max_file_tokens=2_000,
+            dedup_bits=0,
+            sample_head=120,
+            sample_tail=40,
+            strip_comments=False,
+            emit_manifest=True,
+            preset="pro",
+            explain_capsule=False,
+            no_timestamp=True,
             masking_mode="off",
         )
+        generate_markdown_report(cfg)
+        manifest_path = cfg.output.with_suffix('.manifest.json')
+        assert manifest_path.exists(), "Manifest should be generated"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        normalized: set[str] = set()
+        for entry in manifest["files"]:
+            raw_path = entry.get("path", "")
+            if not raw_path:
+                continue
+            candidate = Path(raw_path)
+            if candidate.is_absolute():
+                try:
+                    candidate = candidate.relative_to(root)
+                except ValueError:
+                    pass
+            normalized.add(str(candidate).replace('\\', '/'))
+        return normalized
 
-        try:
-            md_test = generate_markdown_report(cfg_test)
-            print(f"Pattern {pattern} worked!")
+    include_py = run_config(include=["**/*.py"], suffix="include_py")
+    assert include_py == {"src/utils/helper.py", "tests/unit/test_helper.py"}
+    assert "main.py" not in include_py
 
-            for filename in should_include:
-                if filename in md_test:
-                    print(f"  PASS: Correctly included: {filename}")
-                else:
-                    print(f"  FAIL: Should include but missing: {filename}")
+    include_star_py = run_config(include=["*.py"], suffix="include_star")
+    assert {"main.py", "src/utils/helper.py", "tests/unit/test_helper.py"}.issubset(include_star_py)
 
-            for filename in should_exclude:
-                if filename not in md_test:
-                    print(f"  PASS: Correctly excluded: {filename}")
-                else:
-                    print(f"  FAIL: Should exclude but present: {filename}")
+    include_src = run_config(include=["src/**/*.py"], suffix="include_src")
+    assert include_src == {"src/utils/helper.py"}
 
-        except Exception as e:
-            print(f"Pattern {pattern} failed: {e}")
+    exclude_pyc = run_config(exclude=["**/*.pyc"], suffix="exclude_pyc")
+    assert "__pycache__/helper.cpython-39.pyc" not in exclude_pyc
+    assert "src/__pycache__/main.cpython-39.pyc" not in exclude_pyc
+    assert "main.py" in exclude_pyc
+
+    omit_tests = run_config(omit=["tests/**"], suffix="omit_tests")
+    assert "tests/unit/test_helper.py" not in omit_tests
+    assert "src/utils/helper.py" in omit_tests
+

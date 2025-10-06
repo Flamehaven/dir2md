@@ -5,8 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.2] - 2025-09-17
+## [1.0.3] - 2025-10-06
 
+### Changed
+- Promote the CLI configuration defaults and optional flag handling refinements for general availability.
+
+### Notes
+- Approved performance-focused guidance for faster pro preset runs (targeted excludes, tighter budgets, and optional manifest skips).
+
+## [1.0.2] - 2025-10-06
+
+### Added
+- **Pyproject-driven defaults**: CLI now reads `[tool.dir2md]` configuration to seed argument defaults before parsing.
+- **Legacy TOML support**: Bundled `tomli` for Python 3.10 and earlier so configuration loading works across environments.
+
+### Changed
+- **Optional flag handling**: CLI leaves optional switches unset unless provided, preserving config defaults and canonical output filenames.
 ### Fixed
 - **CLI Option Functionality**
   - Fixed `--include-glob` having no effect during report generation
@@ -78,3 +92,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic masking capabilities for sensitive data
 - Gitignore integration and file filtering
 - Manifest generation and statistics reporting
+
+
+
+
+

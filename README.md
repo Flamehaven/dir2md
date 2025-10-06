@@ -78,6 +78,20 @@ dir2md . --emit-manifest --no-timestamp
 dir2md . --budget-tokens 4000 --preset iceberg
 ```
 
+#### pyproject.toml defaults
+
+Dir2md reads `[tool.dir2md]` from the nearest `pyproject.toml` so teams can share default presets, budgets, and filters.
+
+```toml
+[tool.dir2md]
+preset = "iceberg"
+include_glob = ["src/**/*.py", "tests/**/*.py"]
+exclude_glob = ["**/__pycache__/**"]
+emit_manifest = true
+```
+
+Patterns use gitignore-style `gitwildmatch` semantics. Command-line flags still override any value loaded from the configuration file.
+
 ### Output Example
 
 ```markdown
@@ -106,7 +120,7 @@ dir2md . --budget-tokens 4000 --preset iceberg
 
 | Preset | Description | Best For |
 |--------|-------------|-----------|
-| `raw` | Full content inclusion | Development, code review |
+| `raw` | Full inline content; manifest disabled | Development, code review |
 | `iceberg` | Balanced sampling | General documentation |
 | `pro` | Advanced optimization | Large projects, LLM context |
 
@@ -152,8 +166,9 @@ dir2md [path] -o output.md --preset [iceberg|pro|raw]
 --sample-tail 40              # Lines from file end
 
 # Filtering
---include-glob "*.py,*.md"    # Include patterns
---exclude-glob "test*,*.tmp"  # Exclude patterns
+--include-glob "*.py"         # Gitignore-style include (gitwildmatch)
+--exclude-glob "**/__pycache__/**"  # Gitignore-style exclude
+--omit-glob "tests/**"        # Omit content but keep tree
 --only-ext "py,js,ts"         # File extensions only
 
 # Security
@@ -164,6 +179,8 @@ dir2md [path] -o output.md --preset [iceberg|pro|raw]
 --no-timestamp              # Reproducible output
 --dry-run                   # Preview without writing
 ```
+
+Note: the `raw` preset always forces `--emit-manifest` off. Use the `pro` preset with manual flags if you need inline output plus a manifest.
 
 ## 🤝 Contributing
 
