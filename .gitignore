@@ -60,3 +60,5 @@ temp/
 # Personal files to ignore
 ENGLISH_CONVERSION_COMPLETE.md
 USAGE_EXAMPLES.md
+build/
+dist/
