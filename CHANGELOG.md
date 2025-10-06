@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Promote the CLI configuration defaults and optional flag handling refinements for general availability.
+- Add repository-level import helpers so local runs and pytest sessions automatically discover the `src` layout without editable installs.
+
+### Fixed
+- Restore gitwildmatch semantics for recursive globs by preventing `**/` patterns from matching root-level files.
 
 ### Notes
 - Approved performance-focused guidance for faster pro preset runs (targeted excludes, tighter budgets, and optional manifest skips).
