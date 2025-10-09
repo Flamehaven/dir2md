@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2025-10-09
+
+### Added
+- Expand default masking coverage to include GitHub personal access tokens, generic API keys, database URLs, JWTs, and OAuth client secrets in the open source build.
+- Automatically load the nearest `.env` file when launching the CLI so license keys and shared defaults are available without manual exports.
+- Support user-defined masking patterns via `--mask-pattern` flags, `--mask-pattern-file` for loading from files, and `[tool.dir2md.masking]` configuration in `pyproject.toml`.
+
+### Changed
+- Extend the default exclusion set to skip common secret-bearing files such as `.env*`, certificate bundles, and private key formats before scanning directories.
+- Sanitized the public documentation to use ASCII-only characters for Windows cp949 compatibility.
+
+### Fixed
+- **Critical: Windows file:// URI parsing error** - Fixed `file://` URI handling for pattern files on Windows. Previously `file:///C:/path` would fail with "Invalid argument: '\C:\...'" error due to incorrect path slicing. Now properly strips leading slash for Windows absolute paths.
+- **Security: GitHub PAT pattern misplacement** - Moved GitHub Personal Access Token pattern (`gh[pousr]_[0-9A-Za-z]{36}`) from basic to advanced masking rules. This pattern should only activate with Pro license, not in OSS basic mode.
+- Ensure the advanced masking upgrade notice prints only once per session when advanced mode is requested without an active Pro license.
+
+### Testing
+- All 12 tests passing (1 skipped for symlinks on systems without support)
+- Verified custom masking patterns load correctly from both JSON and text files
+- Confirmed Windows file:// URI paths resolve properly
+- Validated basic vs advanced masking mode separation
+
 ## [1.0.3] - 2025-10-06
 
 ### Changed
@@ -81,7 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Testing
 - All 4 test cases continue to pass: `test_budget_and_modes`, `test_ref_mode_manifest`, `test_inline_sampling`, `test_masking`
-- Verified masking functionality works correctly (e.g., `Bearer token` → `[*** MASKED_SECRET ***]`)
+- Verified masking functionality works correctly (e.g., `Bearer token` -> `[*** MASKED_SECRET ***]`)
 - CLI functionality preserved across all modes and options
 
 ### Technical Details

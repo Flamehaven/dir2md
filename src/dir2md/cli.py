@@ -1,5 +1,5 @@
 from __future__ import annotations
-import argparse, zipfile, hashlib, os
+import argparse, zipfile, hashlib, os, json
 from pathlib import Path
 from typing import Any
 
@@ -34,8 +34,23 @@ load_env_file()
 
 DEFAULT_OUTPUT = "PROJECT_BLUEPRINT.md"
 DEFAULT_EXCLUDES = [
-    ".git", "__pycache__", "node_modules", ".venv",
-    "build", "dist", "*.pyc", ".DS_Store",
+    ".git",
+    "__pycache__",
+    "node_modules",
+    ".venv",
+    "build",
+    "dist",
+    "*.pyc",
+    ".DS_Store",
+    ".env",
+    ".env.*",
+    "*.env",
+    "*.pem",
+    "*.key",
+    "*.p12",
+    "*.pfx",
+    "*.cer",
+    "*.crt",
 ]
 _CONFIG_KEYS = {
     "path",
@@ -62,6 +77,8 @@ _CONFIG_KEYS = {
     "dry_run",
     "no_timestamp",
     "masking",
+    "mask_patterns",
+    "mask_pattern_files",
 }
 
 
@@ -99,8 +116,31 @@ def _load_pyproject_config() -> dict[str, Any]:
         for raw_key, value in tool_config.items():
             key = raw_key.replace('-', '_')
             if key not in _CONFIG_KEYS:
+                if raw_key == "masking" and isinstance(value, dict):
+                    patterns = value.get("patterns")
+                    if patterns:
+                        sanitized.setdefault("mask_patterns", [])
+                        if isinstance(patterns, list):
+                            sanitized["mask_patterns"].extend(str(item) for item in patterns)
+                        else:
+                            sanitized["mask_patterns"].append(str(patterns))
+                    pattern_files = value.get("pattern_files")
+                    if pattern_files:
+                        sanitized.setdefault("mask_pattern_files", [])
+                        if isinstance(pattern_files, list):
+                            sanitized["mask_pattern_files"].extend(str(item) for item in pattern_files)
+                        else:
+                            sanitized["mask_pattern_files"].append(str(pattern_files))
                 continue
-            if key in {"include_glob", "exclude_glob", "omit_glob"}:
+            if key in {"include_glob", "exclude_glob", "omit_glob", "mask_patterns"}:
+                if value is None:
+                    continue
+                if isinstance(value, list):
+                    sanitized[key] = [str(item) for item in value]
+                else:
+                    sanitized[key] = [str(value)]
+                continue
+            if key == "mask_pattern_files":
                 if value is None:
                     continue
                 if isinstance(value, list):
@@ -128,6 +168,61 @@ def _load_pyproject_config() -> dict[str, Any]:
             sanitized[key] = value
         return sanitized
     return {}
+
+
+def _load_patterns_from_file(source: str) -> list[str]:
+    """Load regex patterns from a file or file:// URI."""
+    raw = source
+    if raw.startswith("file://"):
+        raw = raw[7:]
+        # Handle Windows absolute paths: file:///C:/path -> C:/path
+        if raw.startswith("/") and len(raw) > 2 and raw[2] == ":":
+            raw = raw[1:]
+    path = Path(raw)
+    patterns: list[str] = []
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        print(f"[WARN] Could not read mask pattern file {source!r}: {exc}")
+        return patterns
+    text = text.strip()
+    if not text:
+        return patterns
+    if path.suffix.lower() in {".json", ".jsonc"}:
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
+            print(f"[WARN] Could not parse JSON mask pattern file {source!r}: {exc}")
+            return patterns
+        if isinstance(data, list):
+            patterns.extend(str(item) for item in data)
+        elif isinstance(data, dict):
+            items = data.get("patterns")
+            if isinstance(items, list):
+                patterns.extend(str(item) for item in items)
+            elif items:
+                patterns.append(str(items))
+    else:
+        for line in text.splitlines():
+            line = line.strip()
+            if line and not line.startswith("#"):
+                patterns.append(line)
+    return patterns
+
+
+def _resolve_custom_mask_patterns(explicit: list[str] | None, files: list[str] | None) -> list[str]:
+    combined: list[str] = []
+    seen: set[str] = set()
+    for pattern in explicit or []:
+        if pattern and pattern not in seen:
+            seen.add(pattern)
+            combined.append(pattern)
+    for source in files or []:
+        for pattern in _load_patterns_from_file(source):
+            if pattern and pattern not in seen:
+                seen.add(pattern)
+                combined.append(pattern)
+    return combined
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -161,7 +256,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--capsule", action="store_true", help="Package md+manifest into zip")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--no-timestamp", action="store_true", help="Omit timestamp for reproducible output")
-    ap.add_argument("--masking", choices=["off", "basic", "advanced"], help="Secret masking mode (advanced requires Pro license)")
+    ap.add_argument("--masking", choices=["off", "basic", "advanced"], help="Secret masking mode (default: basic, advanced requires Pro license)")
+    ap.add_argument("--mask-pattern", action="append", dest="mask_patterns", help="Additional custom regex patterns to mask (applies alongside built-in rules)")
+    ap.add_argument("--mask-pattern-file", action="append", dest="mask_pattern_files", help="Load custom mask regex patterns from file (JSON array or newline separated list). Supports file:// URIs.")
 
     ap.add_argument("-V", "--version", action="version", version=f"dir2md {__version__}")
 
@@ -203,10 +300,14 @@ def main(argv: list[str] | None = None) -> int:
         sample_tail=int(ns.sample_tail) if ns.sample_tail is not None else 40,
         strip_comments=False,
         emit_manifest=bool(ns.emit_manifest if ns.emit_manifest is not None else True),
-        preset=str(ns.preset or "raw"),
+        preset=str(ns.preset or "pro"),
         explain_capsule=bool(ns.explain or False),
         no_timestamp=bool(ns.no_timestamp or False),
-        masking_mode=str(ns.masking or "off"),
+        masking_mode=str(ns.masking or "basic"),
+        custom_mask_patterns=_resolve_custom_mask_patterns(
+            list(ns.mask_patterns or []),
+            list(ns.mask_pattern_files or []),
+        ),
     )
 
     md = generate_markdown_report(cfg)
