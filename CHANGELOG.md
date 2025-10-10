@@ -8,24 +8,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.4] - 2025-10-09
 
 ### Added
-- Expand default masking coverage to include GitHub personal access tokens, generic API keys, database URLs, JWTs, and OAuth client secrets in the open source build.
-- Automatically load the nearest `.env` file when launching the CLI so license keys and shared defaults are available without manual exports.
-- Support user-defined masking patterns via `--mask-pattern` flags, `--mask-pattern-file` for loading from files, and `[tool.dir2md.masking]` configuration in `pyproject.toml`.
+
+#### Enhanced Security Masking
+- Expanded default masking coverage to include GitHub personal access tokens, generic API keys, database URLs, JWTs, and OAuth client secrets in the open source build
+- New patterns detected:
+  - GitHub Personal Access Tokens: `ghp_*`, `gho_*`, `ghu_*`, `ghs_*`, `ghr_*`
+  - Generic API Keys: `api_key=`, `apikey=`, `api-key=`
+  - Database URLs: PostgreSQL, MySQL, MongoDB connection strings
+  - JSON Web Tokens (JWTs): `eyJ*` base64-encoded tokens
+  - OAuth Client Secrets: `client_secret=`, `oauth_secret=`
+
+#### Automatic Environment Configuration
+- Automatically load the nearest `.env` file when launching the CLI so license keys and shared defaults are available without manual exports
+- Zero-configuration startup for teams using `.env` files
+- Seamless Pro license activation
+
+#### User-Defined Masking Patterns
+- Support user-defined masking patterns via `--mask-pattern` flags, `--mask-pattern-file` for loading from files, and `[tool.dir2md.masking]` configuration in `pyproject.toml`
+- Three flexible methods:
+  1. Inline patterns: `--mask-pattern "regex"`
+  2. Pattern files: JSON arrays or newline-delimited text via `file://` URIs
+  3. Configuration: `[tool.dir2md.masking]` section in `pyproject.toml`
 
 ### Changed
-- Extend the default exclusion set to skip common secret-bearing files such as `.env*`, certificate bundles, and private key formats before scanning directories.
-- Sanitized the public documentation to use ASCII-only characters for Windows cp949 compatibility.
+
+#### Expanded Default Exclusions
+- Extended the default exclusion set to skip common secret-bearing files such as `.env*`, certificate bundles, and private key formats before scanning directories
+- New exclusions: `.env`, `.env.local`, `.env.*.local`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `*.crt`, `*.cer`, `*.der`
+
+#### Windows Compatibility Improvements
+- Sanitized the public documentation to use ASCII-only characters for Windows cp949 compatibility
+- ASCII-safe replacements: `[#]`, `[!]`, `[+]`, `[*]`, `[T]` instead of emojis
+- Prevents `illegal multibyte sequence` errors on Windows systems
+
+#### Documentation Clarity
+- Clarified relationship with IsaacBreen's `dir2md` (PyPI package)
+- Added **Acknowledgments** section for community transparency
+- Updated installation instructions to reflect GitHub-only distribution
+- Removed "coming soon" language for PyPI availability
 
 ### Fixed
-- **Critical: Windows file:// URI parsing error** - Fixed `file://` URI handling for pattern files on Windows. Previously `file:///C:/path` would fail with "Invalid argument: '\C:\...'" error due to incorrect path slicing. Now properly strips leading slash for Windows absolute paths.
-- **Security: GitHub PAT pattern misplacement** - Moved GitHub Personal Access Token pattern (`gh[pousr]_[0-9A-Za-z]{36}`) from basic to advanced masking rules. This pattern should only activate with Pro license, not in OSS basic mode.
-- Ensure the advanced masking upgrade notice prints only once per session when advanced mode is requested without an active Pro license.
+
+#### [CRITICAL] Windows file:// URI Parsing Error
+- **Issue:** Windows `file://` URI handling for pattern files failed with `"Invalid argument: '\C:...'"` error due to incorrect path slicing
+- **Root cause:** Path parsing didn't account for Windows absolute paths (`C:\...`)
+- **Solution:** Properly strips leading slash for Windows absolute paths (`file:///C:/path` → `C:/path`)
+- **Impact:** Custom masking pattern files now work correctly on Windows systems
+
+#### [SECURITY] GitHub PAT Pattern Misplacement
+- **Issue:** GitHub Personal Access Token pattern (`gh[pousr]_[0-9A-Za-z]{36}`) was incorrectly placed in basic masking rules instead of advanced (Pro-only)
+- **Risk:** Open-source users received Pro-level pattern matching without license validation
+- **Solution:** Moved GitHub PAT pattern to advanced masking rules, enforcing proper Pro license requirement
+- **Impact:** Correct separation between OSS basic and Pro advanced masking tiers
+
+#### Advanced Masking Notice Deduplication
+- Ensure the advanced masking upgrade notice prints only once per session when advanced mode is requested without an active Pro license
+- **Before:** Multiple notices during single CLI run
+- **After:** Single notice at first invocation
 
 ### Testing
-- All 12 tests passing (1 skipped for symlinks on systems without support)
-- Verified custom masking patterns load correctly from both JSON and text files
-- Confirmed Windows file:// URI paths resolve properly
-- Validated basic vs advanced masking mode separation
+
+#### Automated Tests
+- 12 tests passing (1 skipped for symlinks on systems without support)
+- Full `pytest` suite coverage for core functionality
+- Regression tests for Windows `file://` URI paths
+
+#### Manual Verification
+- Custom masking patterns load correctly from JSON files
+- Custom masking patterns load correctly from text files
+- Windows `file://` URI paths resolve properly (`file:///C:/...`)
+- Basic vs advanced masking mode separation enforced
+- `.env` auto-discovery works across different directory structures
+- ASCII-safe documentation renders correctly on Windows cp949 systems
 
 ## [1.0.3] - 2025-10-06
 
