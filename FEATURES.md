@@ -1,150 +1,134 @@
 # Dir2md Feature Comparison: Open Source vs Pro
 
-> **Transform your codebase into LLM-optimized markdown blueprints**
+> Transform your codebase into LLM-optimized markdown blueprints.
 
-Dir2md follows an **Open-Core** model - providing essential functionality for free while offering advanced features for professional teams and power users.
+Dir2md follows an open-core model: core functionality remains free, while advanced capabilities are available in the commercial Pro build.
 
-## 🎯 Quick Comparison
+## Quick Comparison
 
-| Feature Category | Open Source (Free) | Pro Version |
-|------------------|-------------------|-------------|
-| **Basic Functionality** | ✅ Full Access | ✅ Enhanced |
-| **Security & Masking** | ✅ Basic Patterns | ✅ Advanced + Custom |
-| **Performance** | ✅ Single-threaded | ✅ Parallel + Caching |
-| **Export Options** | ✅ Markdown Only | ✅ HTML, PDF, Slides |
-| **Team Features** | ❌ Individual Use | ✅ CI/CD Integration |
-| **Language Support** | ✅ Basic Analysis | ✅ Smart Plugins |
+| Feature Category      | Open Source (Free)       | Pro Version                  |
+|-----------------------|--------------------------|------------------------------|
+| **Core Functionality** | [*] Full access          | [*] Extended presets         |
+| **Security & Masking** | [#] Essential patterns   | [#] Advanced and custom      |
+| **Performance**        | [=] Single-threaded      | [=] Parallel + caching       |
+| **Export Options**     | [T] Markdown only        | [T] HTML, PDF, Slides        |
+| **Team Features**      | [+] Individual workflows | [+] CI/CD integrations       |
+| **Language Support**   | [T] Basic analysis       | [T] Smart language plugins   |
 
 ---
 
-## 🔓 Open Source Features (MIT License)
+## Open Source Features (MIT License)
 
 ### Core Functionality
-- **📁 Directory Scanning**: Complete file tree analysis with `.gitignore` support
-- **🎯 Smart Filtering**: Include/exclude/omit glob patterns (gitwildmatch semantics)
-- **📊 Token Optimization**: Head/tail sampling with configurable budgets
-- **🔄 Duplicate Detection**: SimHash-based content deduplication 
-- **📋 Manifest Generation**: JSON metadata with file hashes and statistics
-- **⏰ Deterministic Output**: `--no-timestamp` for reproducible builds
-- **🎨 Multiple Presets**: `iceberg`, `pro`, `raw` (default: `raw` for developers; raw disables `--emit-manifest`)
+- [*] Directory scanning with `.gitignore` awareness.
+- [*] Include, exclude, and omit glob filters using gitwildmatch semantics.
+- [=] Token budgeting with configurable head and tail sampling.
+- [*] SimHash-based duplicate detection to minimize repeated content.
+- [=] Optional JSON manifest output with file hashes and statistics.
+- [+] Deterministic builds via `--no-timestamp`.
+- [*] Presets for `iceberg`, `pro`, and `raw` (raw disables manifest output).
 
 ### Basic Security
-- **🛡️ Essential Masking**: Protection for common secrets
+- [#] Built-in masking guardrails for common secrets:
   - AWS Access Keys (`AKIA[0-9A-Z]{16}`)
   - Bearer Tokens (`Bearer <token>`)
-  - Private Keys (`-----BEGIN ... PRIVATE KEY-----`)
+  - Private Keys (`-----BEGIN ... PRIVATE KEY-----` blocks with multiline masking)
+  - GitHub Personal Access Tokens (`gh[pousr]_<36 chars>`)
+  - Generic API key assignments (`api_key=...`, `x-api-key=...`)
+  - Database URLs (`postgres://`, `mysql://`, `mongodb+srv://`, `redis://`, `sqlserver://`)
+  - JWT tokens (`header.payload.signature`)
+  - OAuth client secrets (`client_secret=...`)
+- [#] Custom masking hooks via `--mask-pattern` CLI flag or `mask_patterns` in `pyproject.toml`.
 
 ### Output Modes
-- **📝 Reference Mode**: File listings with metadata
-- **📖 Summary Mode**: Condensed content overview
-- **📄 Inline Mode**: Full content inclusion (within token budget)
+- [*] Reference mode: metadata-only entries for compact manifests.
+- [*] Summary mode: condensed inline snippets.
+- [*] Inline mode: sampled file content within token budgets.
 
 ### CLI & Integration
-- **⚡ Command Line Interface**: Full-featured CLI with help system
-- **🔧 Configurable Options**: Extensive customization via arguments
-- **📦 Easy Installation**: `pip install dir2md`
+- [T] Full-featured CLI with contextual help.
+- [T] pyproject-driven defaults via `[tool.dir2md]` configuration.
+- [+] Automatic `.env` discovery for shared presets and licenses.
+- [T] Dry-run hashing for quick pipeline checks.
 
 ---
 
-## 🔒 Pro Version Features
+## Pro Version Features
 
 ### Advanced Security & Compliance
-- **🛡️ Comprehensive Masking**: 25+ built-in patterns
-  - Cloud Provider Keys (AWS, Azure, GCP)
-  - API Tokens (Slack, GitHub, GitLab)
-  - Database Connections & Credentials
-  - Custom Pattern Support
-- **🔍 Smart Detection**: File-type aware masking
-- **✅ False Positive Reduction**: Context-aware pattern matching
-- **📝 Audit Logging**: Security scanning reports
+- [#] 25+ masking patterns covering major cloud providers and SaaS platforms.
+- [#] Custom pattern support with context-aware false-positive reduction.
+- [#] Audit logs for compliance reporting.
 
 ### Performance & Scale
-- **⚡ Parallel Processing**: Multi-threaded file analysis
-- **💾 Incremental Caching**: `.dir2md_cache/` for faster re-runs
-- **📈 Large Repository Support**: Optimized for 10,000+ files
-- **🚀 Streaming Processing**: Memory-efficient for massive codebases
+- [=] Parallel directory walkers for multi-threaded analysis.
+- [=] Incremental caching (`.dir2md_cache/`) for faster re-runs.
+- [=] Streaming mode to handle repositories with 10,000+ files.
 
 ### Advanced Analysis
-- **🧠 Language Plugins**: Smart code analysis
-  - **Python**: AST parsing, function/class extraction
-  - **JavaScript/TypeScript**: ES module analysis, export detection
-  - **Go**: Package structure, type definitions
-  - **Java**: Class hierarchy, annotation extraction
-- **📊 Drift Detection**: Compare blueprint versions
-- **🎯 Impact Scoring**: Identify critical changes
+- [T] Language-aware plugins (Python AST summaries, JS/TS export detection, Go packages, Java classes).
+- [=] Drift detection to compare blueprint revisions.
+- [=] Impact scoring to highlight critical changes.
 
 ### Export & Sharing
-- **📄 Multiple Formats**: HTML, PDF, PowerPoint slides
-- **🎨 Custom Templates**: Branded output with Jinja2
-- **📱 Responsive HTML**: Mobile-friendly documentation
-- **🖨️ Print Optimization**: Publication-ready PDFs
+- [T] Multiple export formats: HTML, PDF, and slide decks.
+- [T] Customizable templates (Jinja2) for branded output.
+- [T] Responsive HTML optimized for mobile and print workflows.
 
 ### Team & CI/CD Integration
-- **🤖 GitHub Actions**: Automated blueprint generation
-- **💬 PR Comments**: Automatic documentation updates  
-- **🔗 GitLab Integration**: Pipeline integration support
-- **📋 Status Checks**: Quality gates for documentation
-- **👥 Team Templates**: Standardized output formats
+- [+] GitHub Actions and GitLab CI reference pipelines.
+- [+] Pull request comments with blueprint excerpts.
+- [+] Status checks and policy gates for documentation quality.
+- [+] Team templates for consistent deliverables.
 
 ### Developer Experience
-- **🖥️ Terminal UI (TUI)**: Interactive file selection
-- **🔍 Live Preview**: Real-time output preview
-- **⚙️ Advanced Configuration**: Team-wide settings
-- **📊 Analytics Dashboard**: Usage metrics and insights
+- [T] Interactive terminal UI for selective exports.
+- [T] Live preview server for instant feedback.
+- [=] Advanced configuration profiles for teams.
+- [=] Analytics dashboard for usage insights.
 
 ---
 
-## 💰 Pricing & Licensing
+## Pricing & Licensing
 
 ### Open Source (MIT)
-- **Price**: Free forever
-- **Use Case**: Individual developers, small projects
-- **Support**: Community via GitHub Issues
-- **License**: MIT - commercial use allowed
+- Price: free forever.
+- Best for: individual developers and small projects.
+- Support: community-driven via GitHub Issues.
+- License: MIT with full commercial rights.
 
 ### Pro Version
-- **Individual**: $29/month or $290/year
-- **Team (5 users)**: $99/month or $990/year  
-- **Enterprise**: Custom pricing with on-premise options
-- **Support**: Priority email support + documentation
-- **License**: Commercial license with usage analytics opt-out
+- Individual: $29/month or $290/year.
+- Team (5 users): $99/month or $990/year.
+- Enterprise: custom pricing with on-premise deployment.
+- Support: priority email assistance and extended documentation.
+- License: commercial agreement with analytics opt-out.
 
 ---
 
-## 🚀 Usage Examples
+## Usage Examples
 
 ### Open Source Quick Start
 
 ```bash
-# Install from PyPI
 pip install dir2md
-
-# Basic usage with security masking
 dir2md ./my-project --masking basic --preset raw
-
-# Generate with manifest for CI/CD
 dir2md . --emit-manifest --no-timestamp --output blueprint.md
 ```
 
-### Pro Version Examples
+### Pro Evaluation
 
 ```bash
-# Set Pro license
-export DIR2MD_LICENSE="PRO-your-license-key"
-
-# Advanced masking with custom patterns
-dir2md . --masking advanced --preset pro
-
-# Parallel processing with caching
-dir2md ./large-repo --parallel --use-cache
-
-# Generate multiple formats
-dir2md . --export html,pdf --template branded
+export DIR2MD_LICENSE="TRIAL-request-at-dir2md.com"
+pip install dir2md-pro
+dir2md . --masking advanced --parallel --export html
 ```
 
-### GitHub Actions Integration
+---
 
-**Open Source:**
+## GitHub Actions Integration
+
+**Open Source**
 ```yaml
 - name: Generate Blueprint
   run: |
@@ -152,9 +136,9 @@ dir2md . --export html,pdf --template branded
     dir2md . --no-timestamp --output docs/blueprint.md
 ```
 
-**Pro Version:**
+**Pro Version**
 ```yaml
-- name: Generate Pro Blueprint  
+- name: Generate Pro Blueprint
   env:
     DIR2MD_LICENSE: ${{ secrets.DIR2MD_PRO_LICENSE }}
   run: |
@@ -164,75 +148,72 @@ dir2md . --export html,pdf --template branded
 
 ---
 
-## 🎯 When to Upgrade to Pro
+## When to Upgrade to Pro
 
 ### Individual Developers
-- Working with sensitive codebases requiring advanced security
-- Need faster processing for large repositories (1000+ files)
-- Want professional-looking exports for client presentations
-- Require language-specific code analysis
+- Sensitive codebases needing extended masking catalogs.
+- Large repositories where parallel processing saves minutes.
+- Client deliverables that require polished PDF or slide outputs.
+- Desire for language-specific insights beyond generic sampling.
 
-### Teams & Organizations  
-- Standardizing documentation across multiple projects
-- Integrating with CI/CD pipelines for automatic updates
-- Need compliance features for security auditing
-- Want team analytics and usage insights
+### Teams & Organizations
+- Standardized documentation in CI/CD pipelines.
+- Compliance workflows requiring audit trails.
+- Shared presets and analytics across multiple projects.
+- Automated PR annotations for reviewers.
 
 ### Enterprise Users
-- On-premise deployment requirements
-- SSO/SAML integration needs
-- Custom security patterns and compliance rules
-- Dedicated support and SLA requirements
+- On-premise or air-gapped deployments.
+- SSO and SAML integration requirements.
+- Tailored masking policies with legal review.
+- Dedicated support with SLAs.
 
 ---
 
-## 🛠️ Technical Implementation
+## Technical Implementation
 
-### Open-Core Architecture
 ```
 dir2md-core (OSS)           dir2md-pro (Commercial)
-├── CLI Interface           ├── Advanced Masking
-├── File Scanning           ├── Language Plugins  
-├── Token Optimization      ├── Parallel Engine
-├── Basic Masking           ├── Export Templates
-├── Manifest Generation     ├── Team Integration
-└── Markdown Output         └── License Validation
+|-- CLI interface           |-- Advanced masking catalog
+|-- File scanning           |-- Language plugins
+|-- Token optimization      |-- Parallel engine
+|-- Basic masking           |-- Export templates
+|-- Manifest generation     |-- Team integrations
+|-- Markdown output         |-- License validation
 ```
 
-### License Validation
-- **Runtime Check**: Environment variable `DIR2MD_LICENSE`
-- **Offline Validation**: Ed25519 signature verification
-- **Graceful Degradation**: Falls back to OSS features if invalid
-- **No Phone Home**: All validation happens locally
+### License Validation (Pro)
+- Runtime checks via the `DIR2MD_LICENSE` environment variable.
+- Offline signature verification (Ed25519) with fallback to OSS mode.
+- No telemetry or phone-home requests.
 
-### Plugin System
+### Plugin Architecture (Pro)
 ```python
-# Pro Plugin Example
 class PythonAnalyzer(LanguagePlugin):
-    extensions = {'.py'}
-    
-    def analyze(self, content: str) -> Dict[str, Any]:
+    extensions = {".py"}
+
+    def analyze(self, content: str) -> dict[str, object]:
         return {
-            'functions': self.extract_functions(content),
-            'classes': self.extract_classes(content),
-            'imports': self.extract_imports(content)
+            "functions": self.extract_functions(content),
+            "classes": self.extract_classes(content),
+            "imports": self.extract_imports(content),
         }
 ```
 
 ---
 
-## 🆚 Comparison with Alternatives
+## Comparison with Alternatives
 
-| Tool | Open Source | Pro Features | License Model |
-|------|-------------|--------------|---------------|
-| **dir2md** | ✅ Full core functionality | ✅ Advanced security, performance, team features | Open-Core (MIT + Commercial) |
-| tree + cat | ✅ Basic listing | ❌ No advanced features | Free (but manual) |
-| Proprietary doc tools | ❌ Closed source | ✅ Enterprise features | Subscription only |
-| Custom scripts | ✅ DIY solution | ❌ No standardization | Time investment |
+| Tool                 | Open Source | Pro Features | License Model            |
+|----------------------|-------------|--------------|--------------------------|
+| dir2md               | [*] Yes     | [#] Yes      | Open-core (MIT + commercial) |
+| tree + cat           | [+] Partial | [-] None     | Free (manual workflows)  |
+| Proprietary doc tools| [-] No      | [#] Enterprise | Subscription only        |
+| Custom scripts       | [+] DIY     | [-] No       | Time and maintenance cost |
 
 ---
 
-## 📞 Get Started
+## Getting Started
 
 ### Try Open Source
 ```bash
@@ -242,30 +223,28 @@ dir2md --help
 
 ### Evaluate Pro Features
 ```bash
-# 14-day free trial
 export DIR2MD_LICENSE="TRIAL-request-at-dir2md.com"
 pip install dir2md-pro
 dir2md --masking advanced --parallel
 ```
 
 ### Purchase Pro License
-- **Individual**: [Buy now for $29/month](https://dir2md.com/buy/individual)
-- **Team**: [Start team trial](https://dir2md.com/buy/team)  
-- **Enterprise**: [Contact sales](https://dir2md.com/contact)
+- Individual: https://dir2md.com/buy/individual
+- Team: https://dir2md.com/buy/team
+- Enterprise: https://dir2md.com/contact
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Dir2md's open-source core welcomes contributions:
+- Bug reports via GitHub Issues.
+- Feature requests via GitHub Discussions.
+- Code contributions following `CONTRIBUTING.md` guidelines.
+- Documentation improvements and usage examples.
 
-- **Bug Reports**: [GitHub Issues](https://github.com/your-org/dir2md/issues)
-- **Feature Requests**: [GitHub Discussions](https://github.com/your-org/dir2md/discussions)
-- **Code Contributions**: See [CONTRIBUTING.md](CONTRIBUTING.md)
-- **Documentation**: Help improve our guides and examples
-
-Pro features are developed in-house but benefit from community feedback and OSS improvements.
+Pro enhancements are developed in-house but benefit from community feedback on the OSS foundation.
 
 ---
 
-*Made with ❤️ for developers who value great documentation*
+Made with care for developers who value great documentation.

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
 import json
@@ -50,6 +50,7 @@ class Config:
     explain_capsule: bool = False
     no_timestamp: bool = False
     masking_mode: str = "basic"
+    custom_mask_patterns: List[str] = field(default_factory=list)
 
 _DEFAULT_ONLY_EXT = {"py","ts","tsx","js","jsx","md","txt","toml","yaml","yml","json", ""}
 
@@ -112,6 +113,25 @@ def _compile_pathspec(patterns: List[str]) -> _CompiledGlob | None:
     return _CompiledGlob(spec=spec, allows_root_files=allows_root)
 
 
+def _is_within_root(root: Path, candidate: Path) -> bool:
+    """Return True if candidate resolves inside root."""
+    try:
+        resolved_root = root if root.is_absolute() else root.resolve()
+    except (OSError, RuntimeError):
+        resolved_root = root
+    try:
+        resolved_candidate = candidate.resolve(strict=False)
+    except (OSError, RuntimeError):
+        return False
+    if hasattr(resolved_candidate, "is_relative_to"):
+        return resolved_candidate.is_relative_to(resolved_root)  # type: ignore[attr-defined]
+    try:
+        resolved_candidate.relative_to(resolved_root)
+        return True
+    except ValueError:
+        return False
+
+
 def apply_preset(cfg: Config) -> Config:
     try:
         total_bytes = sum((f.stat().st_size for f in cfg.root.rglob('*') if f.is_file()))
@@ -143,6 +163,10 @@ def generate_markdown_report(cfg: Config) -> str:
         raise FileNotFoundError(f"Path does not exist: {root}")
     if not root.is_dir():
         raise NotADirectoryError(f"Path is not a directory: {root}")
+    try:
+        resolved_root = root.resolve()
+    except (OSError, RuntimeError):
+        resolved_root = root
 
     gitignore = build_gitignore_matcher(root) if cfg.respect_gitignore else None
 
@@ -231,8 +255,8 @@ def generate_markdown_report(cfg: Config) -> str:
         if cfg.max_bytes and len(raw) > cfg.max_bytes:
             raw = raw[: cfg.max_bytes]
         text = raw.decode("utf-8", errors="replace")
-        if cfg.masking_mode != "off":
-            text = apply_masking(text, mode=cfg.masking_mode)
+        if cfg.masking_mode != "off" or cfg.custom_mask_patterns:
+            text = apply_masking(text, mode=cfg.masking_mode, custom_patterns=cfg.custom_mask_patterns)
         sh = simhash64(text)
         # Deduplication
         if cfg.dedup_bits > 0 and any(hamming(sh, h0) <= cfg.dedup_bits for h0 in sim_seen):

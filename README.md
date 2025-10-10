@@ -73,10 +73,10 @@ Experience dir2md instantly in your browser:
 ### Installation
 
 ```bash
-# From PyPI (recommended - coming soon)
+# From PyPI (stable version by IsaacBreen)
 pip install dir2md
 
-# From source (current method)
+# Flamehaven's enhanced version (LLM-optimized features)
 git clone https://github.com/Flamehaven/dir2md.git
 cd dir2md
 pip install -e .  # Install in editable/development mode
@@ -192,7 +192,7 @@ pattern_files = ["file://./.dir2md/patterns.txt"]
 
 ## Limitations (Current OSS Build)
 - The `raw` preset always forces `--emit-manifest` off; select `iceberg` or `pro` when you need manifest output.
-- PyPI package is not yet published; install from source (`pip install .`) until the 1.0.4 release is finalized.
+- This enhanced version is distributed via GitHub only; the PyPI `dir2md` package is maintained separately by IsaacBreen with different features.
 - README references Pro-only capabilities (advanced masking, parallel processing, export formats) that are not implemented in this repository.
 
 ## Open-Core Model
@@ -326,6 +326,10 @@ For additional support:
 - Review [Feature Documentation](FEATURES.md) for capability reference
 - Search [GitHub Issues](https://github.com/Flamehaven/dir2md/issues) for similar problems
 - Join discussions in [GitHub Discussions](https://github.com/Flamehaven/dir2md/discussions)
+
+## Acknowledgments
+
+This project shares its name with [IsaacBreen's dir2md](https://pypi.org/project/dir2md/), a simpler directory-to-markdown conversion tool available on PyPI. Our enhanced version focuses on LLM optimization, token budgeting, and advanced security masking for AI-assisted development workflows. Both tools serve different use cases in the ecosystem.
 
 ## License
 

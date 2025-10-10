@@ -2,6 +2,8 @@ from __future__ import annotations
 import json, tempfile
 from pathlib import Path
 from dir2md.core import Config, generate_markdown_report
+from dir2md.cli import _resolve_custom_mask_patterns
+from dir2md.masking import apply_masking
 
 
 def _make_repo(tmp: Path) -> Path:
@@ -121,7 +123,123 @@ UmV1F2Cu5CX2jUcZdVRrVNjm/4Sk8DohVhQj4JY=
     md_unmasked = generate_markdown_report(cfg)
     assert secret_content in md_unmasked
     assert private_key_content in md_unmasked
+
+
+def test_custom_mask_patterns(tmp_path: Path):
+    root = _make_repo(tmp_path)
+    custom_secret = "custom-secret: my-token-123"
+    (root / "secrets.txt").write_text(custom_secret, encoding="utf-8")
+
+    cfg = Config(
+        root=root,
+        output=root / "OUT.md",
+        include_globs=[],
+        exclude_globs=[],
+        omit_globs=[],
+        respect_gitignore=False,
+        follow_symlinks=False,
+        max_bytes=200_000,
+        max_lines=2000,
+        include_contents=True,
+        only_ext=None,
+        add_stats=True,
+        add_toc=False,
+        llm_mode="inline",
+        budget_tokens=1000,
+        max_file_tokens=1000,
+        dedup_bits=0,
+        sample_head=120,
+        sample_tail=40,
+        strip_comments=False,
+        emit_manifest=False,
+        preset="pro",
+        explain_capsule=False,
+        no_timestamp=True,
+        masking_mode="off",
+        custom_mask_patterns=[r"custom-secret:\s+[^\s]+"],
+    )
+
+    md = generate_markdown_report(cfg)
+    assert custom_secret not in md
+    assert "[*** MASKED_SECRET ***]" in md
+    # Ensure turning off custom patterns reveals the secret again
+    cfg.custom_mask_patterns = []
+    md_unmasked = generate_markdown_report(cfg)
+    assert custom_secret in md_unmasked
     assert "[*** MASKED_SECRET ***]" not in md_unmasked
+
+
+def test_custom_mask_patterns_from_file(tmp_path: Path):
+    root = _make_repo(tmp_path)
+    api_secret = "token=abc123"
+    (root / "secrets.ini").write_text(api_secret, encoding="utf-8")
+
+    pattern_file = tmp_path / "patterns.json"
+    pattern_file.write_text(json.dumps({"patterns": [r"token=\w+"]}), encoding="utf-8")
+
+    patterns = _resolve_custom_mask_patterns(
+        [],
+        [pattern_file.resolve().as_uri()],
+    )
+
+    cfg = Config(
+        root=root,
+        output=root / "OUT.md",
+        include_globs=[],
+        exclude_globs=[],
+        omit_globs=[],
+        respect_gitignore=False,
+        follow_symlinks=False,
+        max_bytes=200_000,
+        max_lines=2000,
+        include_contents=True,
+        only_ext=None,
+        add_stats=True,
+        add_toc=False,
+        llm_mode="inline",
+        budget_tokens=1000,
+        max_file_tokens=1000,
+        dedup_bits=0,
+        sample_head=120,
+        sample_tail=40,
+        strip_comments=False,
+        emit_manifest=False,
+        preset="pro",
+        explain_capsule=False,
+        no_timestamp=True,
+        masking_mode="off",
+        custom_mask_patterns=patterns,
+    )
+
+    md = generate_markdown_report(cfg)
+    assert api_secret not in md
+    assert "[*** MASKED_SECRET ***]" in md
+
+
+def test_custom_mask_invalid_regex_logs_and_continues(capsys):
+    aws_key = "AKIAIOSFODNN7EXAMPLE"
+    masked = apply_masking(
+        f"key={aws_key}",
+        mode="basic",
+        custom_patterns=["[unclosed"],
+    )
+    out = capsys.readouterr().out
+    assert "Skipping invalid custom mask pattern" in out
+    assert aws_key not in masked
+    assert "[*** MASKED_SECRET ***]" in masked
+
+
+def test_custom_mask_priority_before_builtin():
+    aws_key = "AKIAIOSFODNN7EXAMPLE"
+    text = f"api_secret -> hide-me\nAWS key {aws_key}"
+    masked = apply_masking(
+        text,
+        mode="basic",
+        custom_patterns=[r"api_secret\s*->\s*\S+"],
+    )
+    assert "api_secret" not in masked
+    assert "[*** MASKED_SECRET ***]" in masked
+    assert aws_key not in masked
 
 
 def test_masking_pro_license_mode_respect(tmp_path: Path, monkeypatch):
